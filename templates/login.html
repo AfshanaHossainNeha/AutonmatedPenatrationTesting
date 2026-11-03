@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - AutoPentest</title>
+  <style>
+    :root {
+      --bg-dark: #030812;
+      --card-bg: rgba(6, 15, 29, 0.94);
+      --border-cyan: #00d2ff;
+      --neon-green: #00ff88;
+      --border-hud: #102e4d;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+    body {
+      background: radial-gradient(circle at 50% 20%, #071933 0%, var(--bg-dark) 85%);
+      color: #e6f1ff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .wrapper {
+      display: flex;
+      gap: 30px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 950px;
+      width: 100%;
+    }
+
+    .cyber-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-hud);
+      border-radius: 12px;
+      padding: 30px;
+      position: relative;
+      box-shadow: 0 0 35px rgba(0, 210, 255, 0.12);
+    }
+
+    .cyber-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--border-cyan), var(--neon-green));
+      border-radius: 12px 12px 0 0;
+    }
+
+    /* Login Area */
+    .login-box { width: 380px; text-align: center; }
+
+    /* SVG Hacker Icon */
+    .hacker-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 15px auto;
+      border: 2px solid var(--border-cyan);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #040d1a;
+      box-shadow: 0 0 20px rgba(0, 210, 255, 0.35);
+    }
+    .hacker-icon svg { width: 48px; height: 48px; fill: var(--border-cyan); }
+
+    .brand-title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #ffffff;
+      text-transform: uppercase;
+    }
+    .brand-title span {
+      color: var(--border-cyan);
+      text-shadow: 0 0 12px rgba(0, 210, 255, 0.7);
+    }
+
+    .sub-title {
+      font-size: 11px;
+      color: var(--neon-green);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 4px;
+      margin-bottom: 22px;
+    }
+
+    .form-group {
+      text-align: left;
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 11px;
+      color: #6a92b9;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      font-family: monospace;
+    }
+    .form-group input {
+      width: 100%;
+      background: #02060e;
+      border: 1px solid #163d66;
+      border-radius: 6px;
+      padding: 12px 14px;
+      color: var(--neon-green);
+      font-size: 14px;
+      outline: none;
+      transition: all 0.25s;
+    }
+    .form-group input:focus {
+      border-color: var(--border-cyan);
+      box-shadow: 0 0 10px rgba(0, 210, 255, 0.4);
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #0077b6, #00b4d8);
+      border: 1px solid var(--border-cyan);
+      border-radius: 6px;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 0 18px rgba(0, 180, 216, 0.35);
+      transition: all 0.2s ease;
+      margin-top: 8px;
+    }
+    .btn-login:hover {
+      background: linear-gradient(135deg, #0096c7, #00e5ff);
+      box-shadow: 0 0 25px rgba(0, 229, 255, 0.6);
+      transform: translateY(-1px);
+    }
+
+    .error-msg {
+      background: rgba(255, 0, 60, 0.15);
+      border: 1px solid #ff003c;
+      color: #ff5277;
+      padding: 8px;
+      font-size: 12px;
+      border-radius: 6px;
+      margin-bottom: 14px;
+      font-family: monospace;
+    }
+
+    /* Cyber Mousepad */
+    .mousepad-box { width: 460px; }
+    .pad-title-bar {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--border-cyan);
+      font-family: monospace;
+      margin-bottom: 10px;
+    }
+    #cyberPad {
+      width: 100%;
+      height: 230px;
+      background: #02050c;
+      border: 1px solid #133353;
+      border-radius: 6px;
+      display: block;
+      cursor: crosshair;
+    }
+    .hud-stats {
+      display: flex;
+      justify-content: space-between;
+      background: #02060f;
+      border: 1px solid #10263c;
+      padding: 8px 12px;
+      font-size: 11px;
+      color: #638eb6;
+      border-radius: 4px;
+      font-family: monospace;
+      margin-top: 12px;
+    }
+    .hud-stats span b { color: var(--neon-green); }
+    .triggers-deck {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .trigger-actuator {
+      background: #051325;
+      border: 1px solid #163d66;
+      color: #7ba6cf;
+      padding: 10px;
+      font-size: 11px;
+      font-family: monospace;
+      text-align: center;
+      border-radius: 4px;
+      cursor: pointer;
+      user-select: none;
+      transition: 0.15s ease;
+    }
+    .trigger-actuator:active {
+      background: var(--border-cyan);
+      color: #02050c;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrapper">
+    <!-- Login Area -->
+    <div class="cyber-card login-box">
+      <div class="hacker-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 5a3 3 0 0 1 6 0v3H9V7zm3 7a2 2 0 0 1 2 2c0 .74-.4 1.38-1 1.72V19h-2v-1.28c-.6-.34-1-.98-1-1.72a2 2 0 0 1 2-2z"/>
+        </svg>
+      </div>
+
+      <h1 class="brand-title">Auto<span>Pentest</span></h1>
+      <p class="sub-title">Automated Penetration Testing Framework</p>
+
+      {% if error %}
+      <div class="error-msg">[!] {{ error }}</div>
+      {% endif %}
+
+      <form method="POST" action="/">
+        <div class="form-group">
+          <label>OPERATOR CALLSIGN</label>
+          <input type="text" name="username" placeholder="admin" required autofocus autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>SECURITY PASSPHRASE</label>
+          <input type="password" name="password" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn-login">AUTHENTICATE SYSTEM</button>
+      </form>
+    </div>
+
+    <!-- Mousepad Area -->
+    <div class="cyber-card mousepad-box">
+      <div class="pad-title-bar">
+        <span>CYBER TELEMETRY TRACKPAD</span>
+        <span style="color: var(--neon-green);">ACTIVE</span>
+      </div>
+
+      <canvas id="cyberPad" width="400" height="230"></canvas>
+
+      <div class="hud-stats">
+        <span id="posLabel">LOC: <b>000x000</b></span>
+        <span id="speedLabel">VEL: <b>0 PPS</b></span>
+        <span id="clickLabel">PULSE: <b>0</b></span>
+      </div>
+
+      <div class="triggers-deck">
+        <div class="trigger-actuator" id="lBtn">PRIMARY SENSOR</div>
+        <div class="trigger-actuator" id="rBtn">AUXILIARY SENSOR</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("cyberPad");
+    const ctx = canvas.getContext("2d");
+    const posLabel = document.getElementById("posLabel");
+    const speedLabel = document.getElementById("speedLabel");
+    const clickLabel = document.getElementById("clickLabel");
+
+    let pulses = 0;
+    let sparks = [];
+    let curX = 0, curY = 0, lastX = 0, lastY = 0, lastTime = performance.now();
+
+    function renderHUD() {
+      ctx.fillStyle = "#02050c";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = "rgba(0, 210, 255, 0.08)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.width; x += 25) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += 25) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+      }
+
+      if (curX > 0 && curY > 0) {
+        ctx.strokeStyle = "rgba(0, 210, 255, 0.4)";
+        ctx.beginPath();
+        ctx.moveTo(curX, 0); ctx.lineTo(curX, canvas.height);
+        ctx.moveTo(0, curY); ctx.lineTo(canvas.width, curY);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#00ff88";
+        ctx.strokeRect(curX - 8, curY - 8, 16, 16);
+      }
+    }
+
+    function addLaserBurn(x, y, color) {
+      for(let i = 0; i < 5; i++) {
+        sparks.push({
+          x: x, y: y,
+          vx: (Math.random() - 0.5) * 4,
+          vy: (Math.random() - 0.5) * 4,
+          life: 1.0,
+          color: color || '#00d2ff'
+        });
+      }
+    }
+
+    function loop() {
+      renderHUD();
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        const s = sparks[i];
+        s.x += s.vx;
+        s.y += s.vy;
+        s.life -= 0.035;
+        if(s.life <= 0) {
+          sparks.splice(i, 1);
+          continue;
+        }
+        ctx.fillStyle = s.color;
+        ctx.globalAlpha = s.life;
+        ctx.fillRect(s.x, s.y, 2.5, 2.5);
+        ctx.globalAlpha = 1.0;
+      }
+      requestAnimationFrame(loop);
+    }
+    loop();
+
+    canvas.addEventListener("mousemove", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      curX = Math.floor(e.clientX - rect.left);
+      curY = Math.floor(e.clientY - rect.top);
+      posLabel.innerHTML = `LOC: <b>${curX}x${curY}</b>`;
+
+      const now = performance.now();
+      const dt = (now - lastTime) / 1000;
+      if (dt > 0.05) {
+        const dist = Math.hypot(curX - lastX, curY - lastY);
+        speedLabel.innerHTML = `VEL: <b>${Math.round(dist/dt)} PPS</b>`;
+        lastX = curX; lastY = curY; lastTime = now;
+      }
+      addLaserBurn(curX, curY, '#00ff88');
+    });
+
+    function recordPulse() {
+      pulses++;
+      clickLabel.innerHTML = `PULSE: <b>${pulses}</b>`;
+      if(curX && curY) addLaserBurn(curX, curY, '#00d2ff');
+    }
+
+    canvas.addEventListener("click", recordPulse);
+    document.getElementById("lBtn").addEventListener("click", recordPulse);
+    document.getElementById("rBtn").addEventListener("click", recordPulse);
+  </script>
+</body>
+</html>

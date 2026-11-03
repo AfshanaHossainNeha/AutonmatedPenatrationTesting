@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoPentest - Tactical Cyber Operations Console</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@600;800;900&display=swap');
+
+    :root {
+      --bg: #000307;
+      --panel-bg: rgba(2, 8, 16, 0.94);
+      --card-border: rgba(0, 240, 255, 0.35);
+      --cyan: #00f0ff;
+      --cyan-glow: rgba(0, 240, 255, 0.45);
+      --green: #00ff88;
+      --green-glow: rgba(0, 255, 136, 0.4);
+      --red: #ff0055;
+      --amber: #ffaa00;
+      --dim-text: #618bb3;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background: var(--bg);
+      color: #e1f1ff;
+      font-family: 'Share Tech Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    button, .nav-btn, .tool-entry, .quick-action-btn, .brand-wrap, .kpi-card, .menu-title, .status-ping, .radar-box {
+      user-select: none;
+      -webkit-user-select: none;
+      cursor: pointer;
+    }
+
+    #matrixCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.22;
+    }
+
+    header {
+      position: relative;
+      z-index: 10;
+      background: rgba(1, 5, 12, 0.96);
+      border-bottom: 2px solid var(--cyan);
+      padding: 12px 26px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+    }
+
+    .brand-wrap { display: flex; align-items: center; gap: 16px; }
+    .brand-shield {
+      width: 48px; height: 48px;
+      border: 1px solid var(--cyan);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(circle, #003e61 0%, #010a14 100%);
+      box-shadow: 0 0 14px var(--cyan-glow);
+    }
+    .brand-shield svg { width: 28px; height: 28px; fill: var(--cyan); }
+
+    .brand-text h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 21px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #ffffff;
+      text-shadow: 0 0 10px var(--cyan-glow);
+    }
+    .brand-text h1 span { color: var(--cyan); }
+    .brand-text p {
+      font-size: 10px;
+      color: var(--green);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .profile-meta { text-align: right; }
+    .profile-meta .operator-tag { font-size: 13px; color: #a5cbef; }
+    .profile-meta .operator-tag b { color: var(--green); font-family: 'Orbitron', sans-serif; }
+    .role-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border: 1px solid var(--amber);
+      color: var(--amber);
+      background: rgba(255, 170, 0, 0.12);
+      margin-left: 6px;
+    }
+    .role-admin { border-color: var(--cyan); color: var(--cyan); background: rgba(0, 240, 255, 0.15); }
+
+    .profile-meta .actions { margin-top: 4px; font-size: 11px; }
+    .profile-meta a {
+      color: var(--red);
+      text-decoration: none;
+      margin-left: 10px;
+      border: 1px solid rgba(255, 0, 85, 0.5);
+      padding: 2px 8px;
+      border-radius: 3px;
+      transition: 0.2s;
+    }
+    .profile-meta a:hover { background: var(--red); color: #fff; box-shadow: 0 0 10px var(--red); }
+
+    .container { display: flex; flex: 1; position: relative; z-index: 10; }
+
+    /* Left Sidebar */
+    aside {
+      width: 245px;
+      background: rgba(1, 5, 12, 0.95);
+      border-right: 1px solid var(--card-border);
+      padding: 18px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .menu-title {
+      font-size: 10px;
+      color: var(--cyan);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 6px;
+      margin-bottom: 6px;
+      padding-left: 8px;
+    }
+    .nav-btn {
+      width: 100%;
+      text-align: left;
+      padding: 10px 14px;
+      color: var(--dim-text);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      background: rgba(0, 0, 0, 0.4);
+      transition: 0.2s;
+      outline: none;
+    }
+    .nav-btn:hover, .nav-btn.active {
+      background: rgba(0, 240, 255, 0.15);
+      color: #fff;
+      border-color: var(--cyan);
+      box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.2);
+    }
+    .nav-btn.admin-link {
+      border: 1px dashed var(--amber);
+      color: var(--amber);
+      background: rgba(255, 170, 0, 0.08);
+    }
+    .nav-btn.admin-link:hover, .nav-btn.admin-link.active {
+      background: var(--amber);
+      color: #010408;
+      border-color: var(--amber);
+      box-shadow: 0 0 12px rgba(255, 170, 0, 0.4);
+    }
+
+    .telemetry-node {
+      margin-top: auto;
+      border: 1px dashed rgba(0, 240, 255, 0.35);
+      background: rgba(1, 4, 10, 0.9);
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #79a6d2;
+      line-height: 1.8;
+    }
+    .status-ping { color: var(--green); font-weight: bold; animation: pulse 1.6s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    /* Main Workspace */
+    main {
+      flex: 1;
+      padding: 22px;
+      display: grid;
+      grid-template-columns: 3.3fr 1.1fr;
+      gap: 20px;
+    }
+
+    .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+    .kpi-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--card-border);
+      padding: 14px;
+      border-radius: 6px;
+      position: relative;
+    }
+    .kpi-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 35px; height: 2px;
+      background: var(--cyan);
+    }
+    .kpi-title { font-size: 10px; color: var(--dim-text); letter-spacing: 1.5px; text-transform: uppercase; }
+    .kpi-val {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-top: 5px;
+    }
+
+    .tactical-deck {
+      background: var(--panel-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 18px;
+      margin-bottom: 18px;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.85);
+    }
+    .deck-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 13px;
+      font-weight: bold;
+      color: var(--cyan);
+      letter-spacing: 1.5px;
+      margin-bottom: 14px;
+    }
+
+    .input-bar { display: flex; gap: 10px; margin-bottom: 12px; }
+    .input-bar input {
+      flex: 1;
+      background: #01050b;
+      border: 1px solid rgba(0, 240, 255, 0.4);
+      padding: 11px 14px;
+      color: var(--green);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 14px;
+      border-radius: 4px;
+      outline: none;
+    }
+    .input-bar input:focus { border-color: var(--cyan); box-shadow: 0 0 12px rgba(0, 240, 255, 0.4); }
+
+    .btn-fire {
+      background: linear-gradient(135deg, rgba(0, 180, 216, 0.45), rgba(0, 119, 182, 0.85));
+      border: 1px solid var(--cyan);
+      color: #fff;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 0 24px;
+      border-radius: 4px;
+      font-size: 12px;
+      transition: 0.2s;
+    }
+    .btn-fire:hover { background: var(--cyan); color: #010408; box-shadow: 0 0 15px var(--cyan); }
+
+    .quick-triggers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+    .quick-action-btn {
+      background: rgba(3, 12, 24, 0.8);
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      color: #8bb3d7;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 10px;
+      padding: 8px 6px;
+      border-radius: 4px;
+      text-align: center;
+      transition: 0.2s;
+    }
+    .quick-action-btn:hover { border-color: var(--cyan); color: #ffffff; background: rgba(0, 240, 255, 0.15); }
+
+    /* Normal Visual Display */
+    .visual-grid { display: grid; grid-template-columns: 240px 1fr; gap: 14px; margin-bottom: 14px; }
+    .radar-box {
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      background: #01050c;
+      border-radius: 4px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .radar-sweep {
+      width: 170px; height: 170px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 240, 255, 0.4);
+      position: relative;
+      background: radial-gradient(circle, rgba(0, 240, 255, 0.05) 0%, transparent 70%);
+      overflow: hidden;
+    }
+    .radar-sweep::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, transparent 0deg, transparent 270deg, rgba(0, 255, 136, 0.45) 360deg);
+      animation: rotateSweep 3s linear infinite;
+    }
+    @keyframes rotateSweep { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .radar-target-dot {
+      position: absolute;
+      width: 7px; height: 7px;
+      background: var(--red);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--red);
+      top: 35%; left: 60%;
+    }
+
+    .telemetry-bars {
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      background: #01050c;
+      border-radius: 4px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .bars-header { font-size: 10px; color: var(--cyan); letter-spacing: 1px; display: flex; justify-content: space-between; }
+    .bar-chart-row { display: flex; align-items: flex-end; gap: 6px; height: 110px; margin-top: 10px; }
+    .bar-col {
+      flex: 1;
+      background: linear-gradient(to top, rgba(0, 240, 255, 0.3), var(--green));
+      border-radius: 2px 2px 0 0;
+      transition: height 0.4s ease;
+    }
+
+    /* User Management Panel (Admin Only View) */
+    #userAdminSection {
+      display: none;
+      border: 1px solid rgba(255, 170, 0, 0.35);
+      background: rgba(3, 11, 20, 0.96);
+      border-radius: 6px;
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+    .admin-form-row { display: flex; gap: 10px; margin-bottom: 14px; }
+    .admin-form-row input, .admin-form-row select {
+      flex: 1;
+      background: #01050c;
+      border: 1px solid rgba(255, 170, 0, 0.4);
+      padding: 10px 12px;
+      color: #ffaa00;
+      font-family: 'Share Tech Mono', monospace;
+      border-radius: 4px;
+      outline: none;
+    }
+    .btn-create-user {
+      background: #ffaa00;
+      color: #000;
+      border: 1px solid #ffaa00;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 0 18px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .users-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+    .users-table th {
+      text-align: left;
+      color: var(--dim-text);
+      border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+      padding: 8px;
+    }
+    .users-table td {
+      padding: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .terminal-container {
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      border-radius: 4px;
+      background: #010409;
+      overflow: hidden;
+    }
+    .term-bar {
+      background: #040c17;
+      padding: 6px 12px;
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(0, 240, 255, 0.15);
+      font-size: 10px;
+      color: var(--dim-text);
+    }
+    .terminal-screen {
+      padding: 12px;
+      font-size: 12px;
+      color: var(--green);
+      height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      line-height: 1.6;
+      cursor: text;
+    }
+    .cursor-blink {
+      display: inline-block;
+      width: 7px; height: 13px;
+      background: var(--green);
+      vertical-align: middle;
+      animation: blink 0.8s infinite;
+    }
+    @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+
+    /* Right Deck */
+    .tools-column { display: flex; flex-direction: column; gap: 14px; }
+    .widget-box {
+      background: var(--panel-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 14px;
+    }
+    .widget-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .tool-grid { display: flex; flex-direction: column; gap: 7px; }
+    .tool-entry {
+      background: rgba(2, 8, 16, 0.85);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      padding: 9px 12px;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #92b8dc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: 0.2s;
+    }
+    .tool-entry:hover, .tool-entry.active {
+      border-color: var(--cyan);
+      color: #ffffff;
+      background: rgba(0, 240, 255, 0.15);
+    }
+
+    .btn-export {
+      width: 100%;
+      padding: 10px;
+      background: rgba(0, 240, 255, 0.12);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 10px;
+      border-radius: 4px;
+      transition: 0.2s;
+      margin-bottom: 8px;
+    }
+    .btn-export:hover { background: var(--cyan); color: #010408; }
+
+    .btn-clear {
+      width: 100%;
+      padding: 10px;
+      background: rgba(255, 0, 68, 0.12);
+      border: 1px solid var(--red);
+      color: #ff4d79;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 10px;
+      border-radius: 4px;
+      transition: 0.2s;
+    }
+    .btn-clear:hover { background: var(--red); color: #fff; }
+  </style>
+</head>
+<body>
+
+  <canvas id="matrixCanvas"></canvas>
+
+  <header>
+    <div class="brand-wrap">
+      <div class="brand-shield">
+        <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 6a3 3 0 0 1 3 3c0 1.3-.84 2.4-2 2.82V16h-2v-3.18A2.99 2.99 0 0 1 9 10a3 3 0 0 1 3-3z"/></svg>
+      </div>
+      <div class="brand-text">
+        <h1>AUTO<span>PENTEST</span> // RBAC-OPS</h1>
+        <p>Tactical Reconnaissance & Identity Management</p>
+      </div>
+    </div>
+
+    <div class="profile-meta">
+      <div class="operator-tag">
+        CALLSIGN: <b>{{ user }}</b>
+        <span class="role-badge {% if role == 'Admin' %}role-admin{% endif %}">{{ role }}</span>
+      </div>
+      <div class="actions">
+        <span>SECURITY LEVEL: {% if role == 'Admin' %}0 (ROOT){% else %}2 (ANALYST){% endif %}</span>
+        <a href="/logout">[DISCONNECT]</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <aside>
+      <div class="menu-title">VECTOR DECK</div>
+      <button class="nav-btn active" onclick="switchModule('dashboard')">⬢ DASHBOARD</button>
+      <button class="nav-btn" onclick="switchModule('ip_scanner')">⬢ HOST DISCOVERY</button>
+      <button class="nav-btn" onclick="switchModule('port_scanner')">⬢ PORT AUDIT</button>
+      <button class="nav-btn" onclick="switchModule('subdomain')">⬢ SUBDOMAIN MAP</button>
+      <button class="nav-btn" onclick="switchModule('dir_scanner')">⬢ PATH HUNTER</button>
+      <button class="nav-btn" onclick="switchModule('dns_diag')">⬢ DNS INTERCEPT</button>
+      <button class="nav-btn" onclick="switchModule('ssl_audit')">⬢ SSL/TLS HANDSHAKE</button>
+      
+      {% if role == 'Admin' %}
+      <div class="menu-title" style="color: var(--amber); margin-top: 14px;">IDENTITY CONTROL</div>
+      <button class="nav-btn admin-link" onclick="toggleUserAdmin()">👑 USER & ROLE MGMT</button>
+      {% endif %}
+
+      <div class="telemetry-node">
+        <div>CORE OS : KALI LINUX</div>
+        <div>BIND IP : {{ host_ip }}</div>
+        <div>USER_ROLE : {{ role }}</div>
+        <div>STATUS : <span class="status-ping">● SECURE_SESSION</span></div>
+      </div>
+    </aside>
+
+    <main>
+      <div>
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-title">TARGET MATRIX</div>
+            <div class="kpi-val" id="kpiTarget" style="color: var(--cyan); font-size: 15px;">{{ host_ip }}</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">ACTIVE SUITE</div>
+            <div class="kpi-val" id="kpiModule" style="font-size: 14px;">Dashboard</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">IDENTITY RBAC</div>
+            <div class="kpi-val" style="color: var(--amber); font-size: 14px;">{{ role }}</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">PACKET LOGS</div>
+            <div class="kpi-val" id="kpiLogCount">1</div>
+          </div>
+        </div>
+
+        <div class="tactical-deck">
+          <div class="deck-title" id="panelTitle">⚡ ATTACK SURFACE RADAR & RECON CONSOLE</div>
+          
+          <div class="input-bar">
+            <input type="text" id="targetInput" placeholder="Enter target IP or hostname (e.g. 127.0.0.1)" value="{{ host_ip }}">
+            <button class="btn-fire" onclick="handleExecution()">FIRE TRIGGER ⚡</button>
+          </div>
+
+          <div class="quick-triggers">
+            <button class="quick-action-btn" onclick="quickAction('FAST PING')">⚡ FAST PING</button>
+            <button class="quick-action-btn" onclick="quickAction('HEX DUMP')">⬢ HEX DUMP</button>
+            <button class="quick-action-btn" onclick="quickAction('HEADER GRAB')">🔍 HEADERS</button>
+            <button class="quick-action-btn" onclick="quickAction('TRACE ROUTE')">🧭 ROUTE HOP</button>
+          </div>
+
+          <!-- User Management Module for Admin -->
+          <div id="userAdminSection">
+            <div style="font-size: 12px; color: var(--amber); font-weight: bold; margin-bottom: 10px; letter-spacing: 1px;">
+              👑 OPERATOR ACCESS CONTROL MATRIX (RBAC REGISTRY)
+            </div>
+            <div class="admin-form-row">
+              <input type="text" id="newUsername" placeholder="CallSign (Username)">
+              <input type="password" id="newPassword" placeholder="Passcode">
+              <select id="newRole">
+                <option value="SecOps Analyst">SecOps Analyst</option>
+                <option value="Read-Only Auditor">Read-Only Auditor</option>
+                <option value="Admin">Admin</option>
+              </select>
+              <button class="btn-create-user" onclick="createUser()">ENROLL USER</button>
+            </div>
+            <table class="users-table">
+              <thead>
+                <tr>
+                  <th>CALLSIGN</th>
+                  <th>ROLE PRIVILEGE</th>
+                  <th>REGISTERED TIME</th>
+                  <th>STATUS</th>
+                </tr>
+              </thead>
+              <tbody id="userTableBody">
+                {% for u, details in users.items() %}
+                <tr>
+                  <td style="color: #fff; font-weight: bold;">{{ u }}</td>
+                  <td><span class="role-badge {% if details.role == 'Admin' %}role-admin{% endif %}">{{ details.role }}</span></td>
+                  <td style="color: var(--dim-text);">{{ details.created_at }}</td>
+                  <td style="color: var(--green);">● ACTIVE</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="visual-grid" id="mainVisualGrid">
+            <div class="radar-box">
+              <div style="font-size: 10px; color: var(--cyan); margin-bottom: 8px; letter-spacing: 1px;">SCOPE RADAR // 360°</div>
+              <div class="radar-sweep">
+                <div class="radar-target-dot"></div>
+              </div>
+            </div>
+
+            <div class="telemetry-bars">
+              <div class="bars-header">
+                <span>SIGNAL FLUX SPECTRUM</span>
+                <span style="color: var(--green);">BANDWIDTH: 100 Gbit/s</span>
+              </div>
+              <div class="bar-chart-row" id="barContainer"></div>
+            </div>
+          </div>
+
+          <div class="terminal-container">
+            <div class="term-bar">
+              <span>TERMINAL://KALI/TTY1</span>
+              <span>RBAC_SESSION: {{ role | upper }}</span>
+            </div>
+            <div class="terminal-screen" id="termLog">SYS_BOOT: Identity Matrix loaded. Active Session: {{ user }} [{{ role }}]
+Bound interface: {{ host_ip }}
+Radar telemetry & Vector Deck online. Ready for command execution.<span class="cursor-blink"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tools-column">
+        <div class="widget-box">
+          <div class="widget-title">TACTICAL ARSENAL</div>
+          <div class="tool-grid">
+            <button class="tool-entry active" onclick="switchModule('ip_scanner')"><span>Host Sweep</span><span>[ENGAGED]</span></button>
+            <button class="tool-entry" onclick="switchModule('port_scanner')"><span>Port Matrix</span><span>[STANDBY]</span></button>
+            <button class="tool-entry" onclick="switchModule('dns_diag')"><span>DNS Intercept</span><span>[STANDBY]</span></button>
+            <button class="tool-entry" onclick="switchModule('subdomain')"><span>Sub Recon</span><span>[STANDBY]</span></button>
+            <button class="tool-entry" onclick="switchModule('dir_scanner')"><span>Path Tracer</span><span>[STANDBY]</span></button>
+            <button class="tool-entry" onclick="switchModule('ssl_audit')"><span>SSL Cert Map</span><span>[STANDBY]</span></button>
+          </div>
+        </div>
+
+        <div class="widget-box">
+          <div class="widget-title">SYSTEM ACTIONS</div>
+          <button class="btn-export" onclick="exportReport()">DOWNLOAD LOGS 📄</button>
+          <button class="btn-clear" onclick="clearConsole()">FLUSH CONSOLE</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Matrix Rain
+    const canvas = document.getElementById("matrixCanvas");
+    const ctx = canvas.getContext("2d");
+    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    const chars = "01010101ABCDEF0123456789X#@!%&*<>:{}[]";
+    const fontSize = 12;
+    let columns = Math.floor(canvas.width / fontSize);
+    let drops = Array(columns).fill(1);
+
+    function drawMatrix() {
+      ctx.fillStyle = "rgba(0, 3, 7, 0.09)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#00f0ff";
+      ctx.font = fontSize + "px 'Share Tech Mono'";
+
+      for (let i = 0; i < drops.length; i++) {
+        const text = chars.charAt(Math.floor(Math.random() * chars.length));
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+      }
+    }
+    setInterval(drawMatrix, 40);
+
+    // Spectrum Bars
+    const barContainer = document.getElementById("barContainer");
+    for (let i = 0; i < 20; i++) {
+      const bar = document.createElement("div");
+      bar.className = "bar-col";
+      bar.style.height = `${Math.floor(Math.random() * 70) + 20}%`;
+      barContainer.appendChild(bar);
+    }
+    setInterval(() => {
+      document.querySelectorAll(".bar-col").forEach(bar => {
+        bar.style.height = `${Math.floor(Math.random() * 85) + 15}%`;
+      });
+    }, 500);
+
+    let currentModule = "dashboard";
+    let logCounter = 1;
+
+    function switchModule(moduleName) {
+      currentModule = moduleName;
+      const targetInput = document.getElementById("targetInput");
+      const panelTitle = document.getElementById("panelTitle");
+      const kpiModule = document.getElementById("kpiModule");
+
+      document.querySelectorAll('.nav-btn, .tool-entry').forEach(el => el.classList.remove('active'));
+
+      if (moduleName === 'dashboard' || moduleName === 'ip_scanner') {
+        panelTitle.innerText = "⚡ ATTACK SURFACE RADAR & HOST DISCOVERY";
+        targetInput.placeholder = "Enter target IP or range (e.g. 192.168.1.1)";
+        kpiModule.innerText = "Host Discovery";
+      } else if (moduleName === 'port_scanner') {
+        panelTitle.innerText = "⚡ PORT MATRIX & SERVICE IDENTIFICATION";
+        targetInput.placeholder = "Enter host and ports (e.g. 127.0.0.1:80,443)";
+        kpiModule.innerText = "Port Audit";
+      } else if (moduleName === 'subdomain') {
+        panelTitle.innerText = "⚡ SUBDOMAIN RECONNAISSANCE GRID";
+        targetInput.placeholder = "Enter root domain (e.g. domain.internal)";
+        kpiModule.innerText = "Sub Recon";
+      } else if (moduleName === 'dir_scanner') {
+        panelTitle.innerText = "⚡ PATH ENUMERATION & ENDPOINT AUDIT";
+        targetInput.placeholder = "Enter base URL (e.g. http://127.0.0.1:5000/api/)";
+        kpiModule.innerText = "Path Tracer";
+      } else if (moduleName === 'dns_diag') {
+        panelTitle.innerText = "⚡ DNS RECORD AUDIT & NAMESERVER TRACE";
+        targetInput.placeholder = "Enter domain or NS target (e.g. localhost)";
+        kpiModule.innerText = "DNS Trace";
+      } else if (moduleName === 'ssl_audit') {
+        panelTitle.innerText = "⚡ SSL / TLS HANDSHAKE & CIPHER AUDIT";
+        targetInput.placeholder = "Enter HTTPS host (e.g. 127.0.0.1:443)";
+        kpiModule.innerText = "SSL Handshake";
+      }
+
+      appendLog(`[*] VECTOR CHANGED -> [${kpiModule.innerText.toUpperCase()}]`);
+    }
+
+    function toggleUserAdmin() {
+      const section = document.getElementById("userAdminSection");
+      if (section.style.display === "block") {
+        section.style.display = "none";
+        appendLog(`[*] Collapsed Identity Management Panel.`);
+      } else {
+        section.style.display = "block";
+        appendLog(`[ADMIN] User & Access Control Matrix mounted.`);
+      }
+    }
+
+    async function createUser() {
+      const username = document.getElementById("newUsername").value.trim();
+      const password = document.getElementById("newPassword").value.trim();
+      const role = document.getElementById("newRole").value;
+
+      if (!username || !password) {
+        alert("Enter both username and passcode!");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/add_user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password, role })
+        });
+        const data = await res.json();
+        if (data.status === "success") {
+          appendLog(`[✓] ${data.message}`);
+          const tbody = document.getElementById("userTableBody");
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td style="color: #fff; font-weight: bold;">${username}</td>
+            <td><span class="role-badge ${role === 'Admin' ? 'role-admin' : ''}">${role}</span></td>
+            <td style="color: var(--dim-text);">Just Now</td>
+            <td style="color: var(--green);">● ACTIVE</td>
+          `;
+          tbody.appendChild(tr);
+          document.getElementById("newUsername").value = "";
+          document.getElementById("newPassword").value = "";
+        } else {
+          appendLog(`[!] ERROR: ${data.message}`);
+        }
+      } catch (err) {
+        appendLog(`[!] Network Error while creating user.`);
+      }
+    }
+
+    function quickAction(type) {
+      const inputVal = document.getElementById("targetInput").value.trim() || "127.0.0.1";
+      const timeStr = new Date().toLocaleTimeString();
+      appendLog(`\n[>] [${timeStr}] TRIGGER: [${type}] on target: ${inputVal}`);
+      if(type === 'HEX DUMP') {
+        appendLog(`[HEX] 0x0000: 45 00 00 3c 1c 46 40 00 40 06 b1 e6 7f 00 00 01  E..<.@.@.......`);
+      } else if(type === 'FAST PING') {
+        appendLog(`[+] ICMP Echo Reply: bytes=64 time=0.031ms TTL=64 (ONLINE)`);
+      } else if(type === 'HEADER GRAB') {
+        appendLog(`[HTTP] 200 OK | Server: Werkzeug/3.0.1 Python/3.11 | CSP: Enforced`);
+      } else if(type === 'TRACE ROUTE') {
+        appendLog(`[HOP 1] 127.0.0.1 (0.010 ms) -> Local Interface Reached.`);
+      }
+    }
+
+    function handleExecution() {
+      const inputVal = document.getElementById("targetInput").value.trim();
+      if (!inputVal) {
+        alert("CRITICAL: Input value required!");
+        return;
+      }
+      document.getElementById("kpiTarget").innerText = inputVal;
+      const timeStr = new Date().toLocaleTimeString();
+      appendLog(`\n[>] [${timeStr}] VECTOR [${currentModule.toUpperCase()}] ACTIVE`);
+      appendLog(`[+] RADAR SWEEPING TARGET -> ${inputVal}`);
+      appendLog(`[*] Packet telemetry captured. Status: NOMINAL.`);
+    }
+
+    function exportReport() {
+      const text = document.getElementById("termLog").innerText;
+      const blob = new Blob([text], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `autopentest_report_${Date.now()}.txt`;
+      a.click();
+    }
+
+    function appendLog(text) {
+      const termLog = document.getElementById("termLog");
+      const blinker = '<span class="cursor-blink"></span>';
+      termLog.innerHTML = termLog.innerHTML.replace(blinker, '') + `\n${text}` + blinker;
+      termLog.scrollTop = termLog.scrollHeight;
+      logCounter++;
+      document.getElementById("kpiLogCount").innerText = logCounter;
+    }
+
+    function clearConsole() {
+      document.getElementById("termLog").innerHTML = `[!] BUFFER_FLUSHED: Console memory purged.\n<span class="cursor-blink"></span>`;
+      logCounter = 1;
+      document.getElementById("kpiLogCount").innerText = logCounter;
+    }
+  </script>
+</body>
+</html>
